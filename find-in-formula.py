@@ -1,4 +1,4 @@
-import sys, getopt, urllib
+import sys, os, getopt, urllib
 import requests, json
 # Necessary for writing to file successfully
 reload(sys)
@@ -14,7 +14,7 @@ def main(argv):
 	search_term = ""
 	out_file = ""
 	
-	args_usage = "tableau-server-connections-updater.py -s <server> -u <username> -p <password> -q <search-term> -o <out-file>"
+	args_usage = "field-in-formula.py -s <server> -u <username> -p <password> -q <search-term> -o <out-file>"
 	
 	try:
 		opts, args = getopt.getopt(argv,"hs:u:p:q:o:", ["server=", "username=", "password=", "query=", "out-file="])
@@ -107,7 +107,11 @@ def main(argv):
 						nodes {
 							name,
 							workbook {
-								name
+								name,
+								owner {
+									username,
+									name
+								}
 							}
 						}
 					}

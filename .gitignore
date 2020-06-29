@@ -1,4 +1,10 @@
 *.txt
 *.twbr
 sites_output/*
+metadata_output/*
+.vscode/
+logging/
 *.hyper
+*.log
+*.ini
+schema.graphql
