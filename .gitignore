@@ -6,5 +6,6 @@ metadata_output/*
 logging/
 *.hyper
 *.log
+*.log.*
 *.ini
 schema.graphql
