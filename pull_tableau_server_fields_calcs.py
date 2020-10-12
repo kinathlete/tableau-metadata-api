@@ -1,26 +1,28 @@
 import pandas as pd
 import sys, os, urllib
 import requests, json
-import certifi # For some certificates that aren't trusted by default
+import certifi # For some certificates that aren"t trusted by default
 from pandas import json_normalize
 
 
 def get_output_schema():
 	return pd.DataFrame({
-		'id':prep_string(),
-		'name':prep_string(),
-		'formula':prep_string(),
-		'role':prep_string(),
-		'dataCategory':prep_string(),
-		'dataType':prep_string(),
-		'sheet.id':prep_string(),
-		'sheet.name':prep_string(),
-		'sheet.workbook.id':prep_string(),
-		'sheet.workbook.name':prep_string(),
-		'sheet.workbook.owner.id':prep_string(),
-		'sheet.workbook.owner.username':prep_string(),
-		'sheet.workbook.owner.name':prep_string(),
-		'sheet.workbook.owner.email':prep_string()
+		"id":prep_string(),
+		"name":prep_string(),
+		"formula":prep_string(),
+		"role":prep_string(),
+		"dataCategory":prep_string(),
+		"dataType":prep_string(),
+		"hasUserReference":prep_bool(),
+		"aggregation":prep_string(),
+		"sheet.id":prep_string(),
+		"sheet.name":prep_string(),
+		"sheet.workbook.id":prep_string(),
+		"sheet.workbook.name":prep_string(),
+		"sheet.workbook.owner.id":prep_string(),
+		"sheet.workbook.owner.username":prep_string(),
+		"sheet.workbook.owner.name":prep_string(),
+		"sheet.workbook.owner.email":prep_string()
 		# Etc, etc.
 	})
 
@@ -34,6 +36,8 @@ content_type_payload = { "query" : """
 				role,
 				dataCategory,
 				dataType,
+				hasUserReference,
+				aggregation,
 				sheetsConnection {
 					nodes {
 						id,
@@ -66,11 +70,11 @@ def get_calculations(input):
 	personal_access_token_name = input.iloc[0]["personal_access_token_name"]
 	personal_access_token_secret = input.iloc[0]["personal_access_token_secret"]
 
-	# If we need to use certificates, we'll specify that here
+	# If we need to use certificates, we"ll specify that here
 	if server_certificates is not None:
-		with open("temp/temp_ca.pem", 'w') as outfile:
+		with open("temp/temp_ca.pem", "w") as outfile:
 			outfile.write(server_certificates)
-		server_certificates_file = "temp/temp_ca.pem" # We'll pass this to the next function (get_stuff) which will specify that when using requests
+		server_certificates_file = "temp/temp_ca.pem" # We"ll pass this to the next function (get_stuff) which will specify that when using requests
 	else:
 		server_certificates_file = certifi.where() # Need to pass the default certificates otherwise
 	
@@ -133,7 +137,7 @@ def get_calculations(input):
 		else:
 			# The reference to ["nodes"] below is necessary for content_types that refer to "connections" such as "calculatedFieldConnections"
 			# It should be dropped for the ones where that does not apply, such as "calculatedFields"
-			# We'll normalize for each level we have in here
+			# We"ll normalize for each level we have in here
 			print("Response received for this site, and it has calculated fields")
 			# Calculations
 			df_calculations = json_normalize(r_json["data"]["calculatedFieldsConnection"]["nodes"], meta=None, record_path=None, record_prefix="field.") # Not _really_ normalization but it works, and we do that next anyway
@@ -166,7 +170,7 @@ def get_calculations(input):
 				# print(data)
 		
 
-	##### We're done #####
+	##### We"re done #####
 	
 	print("Signing out")
 	request_url = server_base_url + "/auth/signout"
