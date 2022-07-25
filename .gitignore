@@ -9,3 +9,6 @@ logging/
 *.log.*
 *.ini
 schema.graphql
+env
+.DS_Store
+temp.*
