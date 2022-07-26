@@ -11,4 +11,4 @@ logging/
 schema.graphql
 env
 .DS_Store
-temp.*
+temp/*

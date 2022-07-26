@@ -3,16 +3,16 @@ import pandas
 import os
 import snowflake.connector
 
-# Snowflake Connection
-con = snowflake.connector.connect(
-    user='marcel.kintscher@biztory.be',
-    account='pz96004.europe-west4.gcp',
-    authenticator='externalbrowser',
-    role='BIZTORYTEAM',
-    warehouse='ANALYTICS_WH',
-    database='SANDBOX_MARCELKINTSCHER',
-    schema='HEH_MIGRATION'
-)
+# # Snowflake Connection
+# con = snowflake.connector.connect(
+#     user='marcel.kintscher@biztory.be',
+#     account='pz96004.europe-west4.gcp',
+#     authenticator='externalbrowser',
+#     role='BIZTORYTEAM',
+#     warehouse='ANALYTICS_WH',
+#     database='SANDBOX_MARCELKINTSCHER',
+#     schema='HEH_MIGRATION'
+# )
 
 # query_calculations = """
 # query calculations {
@@ -71,8 +71,15 @@ query workbooksDatasources {
   workbooksConnection {
     nodes {
       id
+      ,luid
       ,name
       ,projectName
+      ,owner {
+        id
+        ,username
+        ,name
+        ,email
+      }
       ,site {
         id
         ,name
@@ -82,6 +89,7 @@ query workbooksDatasources {
         ,name
         ,__typename
         ,hasExtracts
+        ,extractLastUpdateTime
         ,upstreamDatasources {
           id
           ,name
@@ -103,14 +111,16 @@ query workbooksSQLTables {
       ,description
       ,query
       ,connectionType
-      ,upstreamDatabases {
+      ,tables {
         id
         ,name
-        ,connectionType
         ,isEmbedded
+        ,schema
+        ,fullName
       }
       ,downstreamWorkbooks {
         id
+        ,luid
         ,name
         ,projectName
         ,owner {
@@ -129,22 +139,22 @@ query workbooksSQLTables {
 }
 """
 
-# query_datasources_sheets = """
-# query sheets {
-#   datasources {
-#     id
-#     ,name
-#     ,downstreamSheets {
-#       id
-#       ,workbook {
-#         id
-#         ,name
-#         ,projectName
-#       }
-#     }
-#   }
-# }
-# """
+query_datasources_sheets = """
+query sheets {
+  datasources {
+    id
+    ,name
+    ,downstreamSheets {
+      id
+      ,workbook {
+        id
+        ,name
+        ,projectName
+      }
+    }
+  }
+}
+"""
 
 # query_published_datasources_with_fields = """
 # query publishedDatasources {
@@ -245,72 +255,79 @@ sites = ['','chefsplate','HelloFresh-HR','HF-ANZ','HF-BNLF','HF-CA','HF-DACH','H
 for s in sites:
       
   # Tableau Connection
-  tableau_auth = TSC.PersonalAccessTokenAuth('heh-migration', 'fwmfckOfSL+uIVQTWuH1iQ==:vwYfG9ZackmbFANj7Njoe22dEs5PPj1i', s)
+  tableau_auth = TSC.PersonalAccessTokenAuth('heh-migration', 'fwmfckOfSL+uIVQTWuH1iQ==:vwYfG9ZackmbFANj7Njoe22dEs5PPj1i',s)
   server = TSC.Server('https://service-tableau.staging.bi.hellofresh.io', use_server_version=True)
 
-  s_alnum = ''.join(ch for ch in s if ch.isalnum())
-  
   with server.auth.sign_in(tableau_auth):
+  
+    # if s != '':
+    #   site = server.sites.get_by_name(s)
+    #   server.auth.switch_site(site)
 
-      # ## CALCULATIONS
-      # calculations = server.metadata.query(query_calculations)
-      # data_calculations = calculations['data']
-      # df_calculations = pandas.DataFrame(data_calculations)
-      # print(df_calculations)
-      # filename_calculations="/Users/MK/CLIENTS/HELLOFRESH/tableau-metadata-api/temp/Calculations.json"
-      # df_calculations.to_json(filename_calculations)    
-      
-      # ## DASHBOARDS
-      # dashboards = server.metadata.query(query_dashboards)
-      # data_dashboards = dashboards['data']
-      # df_dashboards = pandas.DataFrame(data_dashboards)
-      # print(df_dashboards)
-      # filename_dashboards="/Users/MK/CLIENTS/HELLOFRESH/tableau-metadata-api/temp/Dashboards.json"
-      # df_dashboards.to_json(filename_dashboards)
+    s_alnum = ''.join(ch for ch in s if ch.isalnum())
 
-      # ## DATASOURCES_WORKBOOKS
-      # print(f'Querying Datasources Workbooks for {s}.')
-      # datasources_workbooks = server.metadata.query(query_datasources_workbooks2)
-      # data_datasources_workbooks = datasources_workbooks['data']
-      # df_datasources_workbooks = pandas.DataFrame(data_datasources_workbooks)
-      # print(df_datasources_workbooks)
-      # filename_datasources_workbooks="/Users/MK/CLIENTS/HELLOFRESH/tableau-metadata-api/temp/Datasources_Workbooks.json"
-      # df_datasources_workbooks.to_json(filename_datasources_workbooks)
+    ## TABLEAU
 
-      ## SQLQUERIES_WORKBOOKS
-      print(f'Querying Datasources Workbooks for {s}.')
-      sqlqueries_workbooks = server.metadata.query(query_custom_sql_tables)
-      data_sqlqueries_workbooks = sqlqueries_workbooks['data']
-      df_sqlqueries_workbooks = pandas.DataFrame(data_sqlqueries_workbooks)
-      print(df_sqlqueries_workbooks)
-      filename_sqlqueries_workbooks="/Users/MK/CLIENTS/HELLOFRESH/tableau-metadata-api/temp/Sqlqueries_Workbooks.json"
-      df_sqlqueries_workbooks.to_json(filename_sqlqueries_workbooks)
+    # ## CALCULATIONS
+    # calculations = server.metadata.query(query_calculations)
+    # data_calculations = calculations['data']
+    # df_calculations = pandas.DataFrame(data_calculations)
+    # print(df_calculations)
+    # filename_calculations="/Users/MK/CLIENTS/HELLOFRESH/tableau-metadata-api/temp/Calculations.json"
+    # df_calculations.to_json(filename_calculations)    
+    
+    # ## DASHBOARDS
+    # dashboards = server.metadata.query(query_dashboards)
+    # data_dashboards = dashboards['data']
+    # df_dashboards = pandas.DataFrame(data_dashboards)
+    # print(df_dashboards)
+    # filename_dashboards="/Users/MK/CLIENTS/HELLOFRESH/tableau-metadata-api/temp/Dashboards.json"
+    # df_dashboards.to_json(filename_dashboards)
 
-      # ## DATASOURCES_SHEETS
-      # datasources_sheets = server.metadata.query(query_datasources_sheets)
-      # data_datasources_sheets = datasources_sheets['data']
-      # df_datasources_sheets = pandas.DataFrame(data_datasources_sheets)
-      # filename_datasources_sheets="/Users/MK/CLIENTS/HELLOFRESH/tableau-metadata-api/temp/Datasources_Sheets.json"
-      # df_datasources_sheets.to_json(filename_datasources_sheets)
+    ## DATASOURCES_WORKBOOKS
+    print(f'Querying Datasources Workbooks for {s}.')
+    datasources_workbooks = server.metadata.query(query_datasources_workbooks2)
+    data_datasources_workbooks = datasources_workbooks['data']
+    df_datasources_workbooks = pandas.DataFrame(data_datasources_workbooks)
+    print(df_datasources_workbooks)
+    filename_datasources_workbooks="/Users/MK/CLIENTS/HELLOFRESH/tableau-metadata-api/temp/Datasources_Workbooks_"+s_alnum+".json"
+    df_datasources_workbooks.to_json(filename_datasources_workbooks)
 
-      # ## PUBLISHED_DATASOURCES_WITH_FIELDS
-      # published_datasources_with_fields = server.metadata.query(query_published_datasources_with_fields)
-      # data_published_datasources_with_fields = published_datasources_with_fields['data']
-      # df_published_datasources_with_fields = pandas.DataFrame(data_published_datasources_with_fields)
-      # filename_published_datasources_with_fields="/Users/MK/CLIENTS/HELLOFRESH/tableau-metadata-api/temp/Published_Datasources_With_Fields.json"
-      # df_published_datasources_with_fields.to_json(filename_published_datasources_with_fields)
+    ## SQLQUERIES_WORKBOOKS
+    print(f'Querying SQL Queries Workbooks for {s}.')
+    sqlqueries_workbooks = server.metadata.query(query_custom_sql_tables)
+    data_sqlqueries_workbooks = sqlqueries_workbooks['data']
+    df_sqlqueries_workbooks = pandas.DataFrame(data_sqlqueries_workbooks)
+    print(df_sqlqueries_workbooks)
+    filename_sqlqueries_workbooks="/Users/MK/CLIENTS/HELLOFRESH/tableau-metadata-api/temp/Sqlqueries_Workbooks_"+s_alnum+".json"
+    df_sqlqueries_workbooks.to_json(filename_sqlqueries_workbooks)
 
-      # ## REFERENCED_FIELDS
-      # referenced_fields = server.metadata.query(query_referenced_fields)
-      # data_referenced_fields = referenced_fields['data']
-      # df_referenced_fields = pandas.DataFrame(data_referenced_fields)
-      # filename_referenced_fields="/Users/MK/CLIENTS/HELLOFRESH/tableau-metadata-api/temp/Referenced_Fields.json"
-      # df_referenced_fields.to_json(filename_referenced_fields)
-      
-      
+    # ## DATASOURCES_SHEETS
+    # print(f'Querying Datasources Sheets for {s}.')
+    # datasources_sheets = server.metadata.query(query_datasources_sheets)
+    # data_datasources_sheets = datasources_sheets['data']
+    # df_datasources_sheets = pandas.DataFrame(data_datasources_sheets)
+    # print(df_datasources_sheets)
+    # filename_datasources_sheets="/Users/MK/CLIENTS/HELLOFRESH/tableau-metadata-api/temp/Datasources_Sheets_"+s_alnum+".json"
+    # df_datasources_sheets.to_json(filename_datasources_sheets)
 
+    # ## PUBLISHED_DATASOURCES_WITH_FIELDS
+    # published_datasources_with_fields = server.metadata.query(query_published_datasources_with_fields)
+    # data_published_datasources_with_fields = published_datasources_with_fields['data']
+    # df_published_datasources_with_fields = pandas.DataFrame(data_published_datasources_with_fields)
+    # filename_published_datasources_with_fields="/Users/MK/CLIENTS/HELLOFRESH/tableau-metadata-api/temp/Published_Datasources_With_Fields.json"
+    # df_published_datasources_with_fields.to_json(filename_published_datasources_with_fields)
 
-  # CALCULATIONS
+    # ## REFERENCED_FIELDS
+    # referenced_fields = server.metadata.query(query_referenced_fields)
+    # data_referenced_fields = referenced_fields['data']
+    # df_referenced_fields = pandas.DataFrame(data_referenced_fields)
+    # filename_referenced_fields="/Users/MK/CLIENTS/HELLOFRESH/tableau-metadata-api/temp/Referenced_Fields.json"
+    # df_referenced_fields.to_json(filename_referenced_fields)
+
+  ## SNOWFLAKE
+
+  # ## CALCULATIONS
   # con.cursor().execute("CREATE OR REPLACE TABLE CLD_CALCULATIONS (ID VARIANT)")
   # put_statement_calculations = "PUT file://" + filename_calculations + " @~/metadata"
   # con.cursor().execute(put_statement_calculations)
@@ -334,19 +351,19 @@ for s in sites:
   #                     FILE_FORMAT = (FORMAT_NAME = json_file_format)"""
   # con.cursor().execute(copy_statement)
 
-  ## SQLQUERIES_WORKBOOKS
-  con.cursor().execute("CREATE OR REPLACE TABLE HEH_SQLQUERIES_WORKBOOKS_"+ s_alnum +" (ID VARIANT)")
-  put_statement_sqlqueries_workbooks = "PUT file://" + filename_sqlqueries_workbooks + " @~/metadata"
-  con.cursor().execute(put_statement_sqlqueries_workbooks)
-  copy_statement = "COPY INTO HEH_SQLQUERIES_WORKBOOKS_"+ s_alnum +""" FROM @~/metadata/Sqlqueries_Workbooks.json.gz 
-                      FILE_FORMAT = (FORMAT_NAME = json_file_format)"""
-  con.cursor().execute(copy_statement)
+  # ## SQLQUERIES_WORKBOOKS
+  # con.cursor().execute("CREATE OR REPLACE TABLE HEH_SQLQUERIES_WORKBOOKS_"+ s_alnum +" (ID VARIANT)")
+  # put_statement_sqlqueries_workbooks = "PUT file://" + filename_sqlqueries_workbooks + " @~/metadata"
+  # con.cursor().execute(put_statement_sqlqueries_workbooks)
+  # copy_statement = "COPY INTO HEH_SQLQUERIES_WORKBOOKS_"+ s_alnum +""" FROM @~/metadata/Sqlqueries_Workbooks.json.gz 
+  #                     FILE_FORMAT = (FORMAT_NAME = json_file_format)"""
+  # con.cursor().execute(copy_statement)
 
   # ## DATASOURCES_SHEETS
-  # con.cursor().execute("CREATE OR REPLACE TABLE CLD_DATASOURCES_AND_SHEETS (ID VARIANT)")
+  # con.cursor().execute("CREATE OR REPLACE TABLE HEH_DATASOURCES_AND_SHEETS_"+ s_alnum +" (ID VARIANT)")
   # put_statement_datasources_sheets = "PUT file://" + filename_datasources_sheets + " @~/metadata"
   # con.cursor().execute(put_statement_datasources_sheets)
-  # copy_statement = """COPY INTO CLD_DATASOURCES_AND_SHEETS FROM @~/metadata/Datasources_Sheets.json.gz 
+  # copy_statement = "COPY INTO HEH_DATASOURCES_AND_SHEETS_"+ s_alnum +""" FROM @~/metadata/Datasources_Sheets.json.gz 
   #                     FILE_FORMAT = (FORMAT_NAME = json_file_format)"""
   # con.cursor().execute(copy_statement)
 
@@ -369,10 +386,10 @@ for s in sites:
   # os.remove(filename_calculations)
   # os.remove(filename_dashboards)
   # os.remove(filename_datasources_workbooks)
-  os.remove(filename_sqlqueries_workbooks)
+  # os.remove(filename_sqlqueries_workbooks)
   # os.remove(filename_datasources_sheets)
   # os.remove(filename_published_datasources_with_fields)
   # os.remove(filename_referenced_fields)
 
 server.auth.sign_out()
-con.close()
+# con.close()
